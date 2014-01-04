@@ -3,6 +3,11 @@ Platter
 
 A simple single-file server with a GUI.
 
+Screenshot
+----------
+
+![Screenshot](https://raw.github.com/Stebalien/platter/screenshots/screenshot.png)
+
 Features
 --------
 (i.e. why not just use woof)
