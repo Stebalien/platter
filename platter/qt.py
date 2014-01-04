@@ -28,6 +28,7 @@ class PlatterQt(QtWidgets.QApplication):
         self.file = self.server.serve(fname)
 
         self.main = PlatterQtUI(self.file)
+        self.main.show()
         self.connectSignals()
 
         self.server_thread = threading.Thread(target=self.server.serve_forever)
@@ -118,7 +119,6 @@ class PlatterQtUI(QtWidgets.QWidget):
 
         self.setLayout(window_layout)
         self.setWindowTitle('Platter')
-        self.show()
 
     def makeQRCode(self):
         image = qrcode.make(self.file.url, box_size=5)
