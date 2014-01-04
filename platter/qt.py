@@ -270,7 +270,7 @@ def main():
         print(e, file=sys.stderr)
         return 1
     else:
-        return app.exec_()
+        return app.exec()
 
 if __name__ == "__main__":
     main()
