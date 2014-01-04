@@ -3,17 +3,29 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 from .util import async
 from .server import PlatterHTTPServer
 from cgi import escape
+import os
 
 
+class IllegalArgumentException(ValueError):
+    pass
 
 class PlatterQt(QtWidgets.QApplication):
-    def __init__(self, files):
-        super().__init__([])
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        try:
+            fname = self.arguments()[1]
+        except:
+            raise IllegalArgumentException("Missing Filename")
+
+        if not os.path.exists(fname):
+            raise IllegalArgumentException("File Not Found: %s" % fname)
+
         self.transfers = {}
 
         self.server = PlatterHTTPServer()
 
-        self.file = self.server.serve(files[0])
+        self.file = self.server.serve(fname)
 
         self.main = PlatterQtUI(self.file)
         self.connectSignals()
@@ -252,8 +264,13 @@ class TransferPane(QtWidgets.QWidget):
 
 def main():
     import sys
-    app = PlatterQt(sys.argv)
-    return app.exec_()
+    try:
+        app = PlatterQt(sys.argv)
+    except IllegalArgumentException as e:
+        print(e, file=sys.stderr)
+        return 1
+    else:
+        return app.exec_()
 
 if __name__ == "__main__":
     main()
