@@ -19,8 +19,9 @@ TODO
 ----
 
 * Alternative interfaces (CLI, GTK?)
-* Multiple files
-* Drag and drop
+* ZIPs (directories)?
+* Download from the web?
+* Drag and drop data?
 
 License
 -------
