@@ -20,7 +20,7 @@ setup(
     name = "platter",
     version = "1.0",
     packages = find_packages(),
-    install_requires = ["qrcode", "netifaces"],
+    install_requires = ["Pillow>=2.3.0", "qrcode", "netifaces"],
     author = "Steven Allen",
     author_email = "steven@stebalien.com",
     description = "A single file server.",
