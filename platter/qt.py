@@ -4,6 +4,7 @@ from .util import async
 from .server import PlatterHTTPServer
 from cgi import escape
 from urllib.request import pathname2url
+from PIL.ImageQt import ImageQt
 import os
 
 class Signaler(QtCore.QObject):
@@ -200,7 +201,7 @@ class FilePane(QtWidgets.QWidget):
 
     def makeQRCode(self):
         image = qrcode.make(self.file.url, box_size=5)
-        pixmap = QtGui.QPixmap.fromImage(QtGui.QImage(image.tobytes(), image.size[0], image.size[1], QtGui.QImage.Format_Mono))
+        pixmap = QtGui.QPixmap.fromImage(ImageQt(image))
         label = QtWidgets.QLabel('', self)
         label.setPixmap(pixmap)
         container = QtWidgets.QVBoxLayout()
