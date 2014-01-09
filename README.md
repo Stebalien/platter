@@ -19,7 +19,6 @@ TODO
 ----
 
 * Alternative interfaces (CLI, GTK?)
-* ZIPs (directories)?
 * Download from the web?
 * Drag and drop data?
 

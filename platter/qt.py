@@ -51,8 +51,9 @@ class PlatterQt(QtWidgets.QApplication):
         self.main = PlatterQtUI()
         self.connectSignals()
 
-        for fpath in self.arguments()[1:]:
-            self.addFile(fpath)
+        fpaths = self.arguments()[1:]
+        if fpaths:
+            self.addFiles(fpaths)
 
         self.main.show()
 
@@ -66,9 +67,9 @@ class PlatterQt(QtWidgets.QApplication):
     def onQuit(self):
         self._shutdown()
 
-    def addFile(self, fpath):
-        if os.path.exists(fpath):
-            self.server.serve(fpath)
+    def addFiles(self, fpaths):
+        if all(os.path.exists(fpath) for fpath in fpaths):
+            self.server.serve(fpaths)
             return True
         else:
             return False
@@ -103,7 +104,7 @@ class PlatterQtUI(QtWidgets.QWidget):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.app.addFile(url.path())
+            self.app.addFiles([url.path() for url in event.mimeData().urls()])
 
     def initUI(self):
         self.setAcceptDrops(True);
@@ -211,13 +212,10 @@ class FilePane(QtWidgets.QWidget):
 
     def makeHeaderPane(self):
         title = QtWidgets.QLabel(
-            '<a style="color: {color};" href="{url}"><h1 style="font-weight: normal;">{filename}</h1></a>'.format(
-                filename=escape(self.file.basename),
-                url=path2url(self.file.filepath),
-                color=self.palette().brightText().color().name()
+            '<h1 style="font-weight: normal;">{filename}</h1>'.format(
+                filename=escape(self.file.name),
             )
         )
-        title.setOpenExternalLinks(True)
 
         removeBtn = QtWidgets.QToolButton()
         removeBtn.setText('Remove')
@@ -285,7 +283,6 @@ class FilePane(QtWidgets.QWidget):
         while v:
             v.widget().hide()
             v = transfer.layout().takeAt(0)
-
 
 class TransferPane(QtWidgets.QWidget):
     def __init__(self, request):
