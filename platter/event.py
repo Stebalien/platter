@@ -23,3 +23,8 @@ class EventHandler:
             if signal in self.__callbacks:
                 self.__callbacks[signal].remove(cb)
 
+    def once(self, signal, cb):
+        def fn(*args, **kwargs):
+            self.off(signal, cb)
+            cb(*args, **kwargs)
+        return self.on(signal, fn)
