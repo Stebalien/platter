@@ -1,87 +1,9 @@
-import threading, qrcode
+import qrcode
 from PyQt5 import QtGui, QtCore, QtWidgets
-from .util import async
-from .server import PlatterHTTPServer
+from .common import sync
 from cgi import escape
-from urllib.request import pathname2url
 from PIL.ImageQt import ImageQt
-import os
 
-class Signaler(QtCore.QObject):
-    signal = QtCore.pyqtSignal(tuple, dict)
-
-    def __init__(self, fn, block=False):
-        super().__init__()
-
-        self.function = fn
-        if block:
-            self.signal.connect(self.__handler, QtCore.Qt.BlockingQueuedConnection)
-        else:
-            self.signal.connect(self.__handler)
-
-    def __handler(self, args, kwargs):
-        self.function(*args, **kwargs)
-
-    def __call__(self, *args, **kwargs):
-        self.signal.emit(args, kwargs)
-
-def sync(fn, block=False):
-    return Signaler(fn, block)
-
-class IllegalArgumentException(ValueError):
-    pass
-
-def path2url(path):
-    return 'file://' + pathname2url(os.path.abspath(path))
-
-class PlatterQt(QtWidgets.QApplication):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        #try:
-        #    fname = self.arguments()[1]
-        #except:
-        #    raise IllegalArgumentException("Missing Filename")
-
-        #if not os.path.exists(fname):
-        #    raise IllegalArgumentException("File Not Found: %s" % fname)
-
-
-        self.server = PlatterHTTPServer()
-        self.main = PlatterQtUI()
-        self.connectSignals()
-
-        fpaths = self.arguments()[1:]
-        if fpaths:
-            self.addFiles(fpaths)
-
-        self.main.show()
-
-        self.server_thread = threading.Thread(target=self.server.serve_forever)
-        self.server_thread.daemon = True
-        self.server_thread.start()
-
-    def connectSignals(self):
-        self.aboutToQuit.connect(self.onQuit)
-
-    def onQuit(self):
-        self._shutdown()
-
-    def addFiles(self, fpaths):
-        if all(os.path.exists(fpath) for fpath in fpaths):
-            self.server.serve(fpaths)
-            return True
-        else:
-            return False
-
-    def _shutdown(self):
-        self.server.shutdown()
-        self.server_thread.join()
-
-    @async
-    def shutdown(self):
-        self._shutdown()
-        self.quit()
 
 class PlatterQtUI(QtWidgets.QWidget):
 
@@ -136,7 +58,6 @@ class PlatterQtUI(QtWidgets.QWidget):
         self.setWindowTitle('Platter')
 
     def makeFilesPane(self):
-        files_container = QtWidgets.QWidget()
         self.files_pane = QtWidgets.QVBoxLayout()
         self.files_pane.setSpacing(0)
         self.files_pane.setContentsMargins(0,0,0,0)
@@ -330,15 +251,3 @@ class TransferPane(QtWidgets.QWidget):
     def onCancel(self):
         self.request.cancel()
 
-def main():
-    import sys
-    try:
-        app = PlatterQt(sys.argv)
-    except IllegalArgumentException as e:
-        print(e, file=sys.stderr)
-        return 1
-    else:
-        return app.exec()
-
-if __name__ == "__main__":
-    main()

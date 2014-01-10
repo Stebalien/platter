@@ -1,7 +1,7 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from threading import Thread, Event
-from .event import EventHandler
+from .event import Observable
 from tempfile import TemporaryFile
 from .network import find_ip
 import os
@@ -12,11 +12,13 @@ from zipfile import ZipFile
 
 from .util import make_code, list_files
 
-class PlatterHTTPRequestHandler(BaseHTTPRequestHandler, EventHandler):
+__all__ = ("Observable",)
+
+class Request(BaseHTTPRequestHandler, Observable):
     canceled = False
     progress = 0
     def __init__(self, *args, **kwargs):
-        EventHandler.__init__(self)
+        Observable.__init__(self)
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
     def do_GET(self):
         try:
@@ -72,7 +74,7 @@ class PlatterHTTPRequestHandler(BaseHTTPRequestHandler, EventHandler):
                 pass
         self.file._unregister_request(self)
 
-class File(EventHandler):
+class File(Observable):
     size = None
 
     def __init__(self, server, fid, name):
@@ -191,10 +193,10 @@ def AutoFile(server, fid, fpaths):
             ) for path in fpaths))
         )
 
-class PlatterHTTPServer(ThreadingMixIn, HTTPServer, EventHandler):
+class Server(ThreadingMixIn, HTTPServer, Observable):
 
-    def __init__(self, address=("", 0), handler=PlatterHTTPRequestHandler, **kwargs):
-        EventHandler.__init__(self)
+    def __init__(self, address=("", 0), handler=Request, **kwargs):
+        Observable.__init__(self)
         HTTPServer.__init__(self, address, handler, **kwargs)
         self.paths = {}
         self.files = {}

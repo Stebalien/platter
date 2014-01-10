@@ -1,11 +1,14 @@
 import os, base64
 import threading
 import itertools
+import functools
+from urllib.request import pathname2url
 
 def make_code(length=6):
     return base64.urlsafe_b64encode(os.urandom(length)).decode('utf-8')
 
 def async(func):
+    @functools.wraps(func)
     def do(*args, **kwargs):
         if "callback" in kwargs:
             cb = kwargs.pop("callback")
@@ -25,4 +28,7 @@ def list_files(path):
         ) for dirpath, dirnames, filenames in os.walk(path))
     else:
         return (path,)
+
+def path2url(path):
+    return 'file://' + pathname2url(os.path.abspath(path))
 
