@@ -18,7 +18,7 @@
 from setuptools import setup, find_packages
 setup(
     name = "platter",
-    version = "1.0",
+    version = "1.1",
     packages = find_packages(),
     install_requires = ["Pillow>=2.3.0", "qrcode", "netifaces"],
     author = "Steven Allen",
