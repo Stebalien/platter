@@ -1,6 +1,10 @@
-from .app import PlatterQt
+from .app import PlatterQt, AlreadyRunning
 
 def main():
     import sys
-    app = PlatterQt(sys.argv)
-    return app.exec()
+    try:
+        app = PlatterQt(sys.argv)
+    except AlreadyRunning:
+        return 0
+    else:
+        return app.exec_()

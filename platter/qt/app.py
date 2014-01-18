@@ -1,20 +1,37 @@
 from PyQt5 import QtWidgets
 from ..util import async
+from ..dbus import get_instance, PlatterServerDBus
 import os, threading
 
 from .ui import PlatterQtUI
 from ..server import Server
 
+class AlreadyRunning(Exception):
+    pass
+
 class PlatterQt(QtWidgets.QApplication):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        try:
+            from dbus.mainloop.pyqt5 import DBusQtMainLoop
+            DBusQtMainLoop(set_as_default=True)
+        except ImportError:
+            pass
+
+        fpaths = self.arguments()[1:]
+
+        inst = get_instance()
+        if inst:
+            if fpaths:
+                inst.AddFiles(fpaths)
+                raise AlreadyRunning()
 
 
         self.server = Server()
+        PlatterServerDBus(self.server)
         self.main = PlatterQtUI()
         self.connectSignals()
 
-        fpaths = self.arguments()[1:]
         if fpaths:
             self.addFiles(fpaths)
 

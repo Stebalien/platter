@@ -17,6 +17,7 @@ Features
 * Bundles multiple files/directories into Zip archives.
 * Individual files/archives may be removed at runtime.
 * Files/archives may be added at runtime.
+* Single instance
 
 TODO
 ----
