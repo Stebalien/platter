@@ -210,8 +210,8 @@ class Server(ThreadingMixIn, HTTPServer, Observable):
             f = AutoFile(self, fid, fpaths)
             self.files[f.fid] = f
             self.paths[f.path] = f
+            self.trigger("add", f)
 
-        self.trigger("add", f)
         return f
     
     def unserve(self, file):

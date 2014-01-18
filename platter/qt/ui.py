@@ -1,9 +1,7 @@
 import qrcode
 from PyQt5 import QtGui, QtCore, QtWidgets
 from .common import sync
-from cgi import escape
 from PIL.ImageQt import ImageQt
-
 
 class PlatterQtUI(QtWidgets.QWidget):
 
@@ -19,6 +17,8 @@ class PlatterQtUI(QtWidgets.QWidget):
     def connectSignals(self):
         self.app.server.on("add", sync(self.onAddFile))
         self.app.server.on("remove", sync(self.onRemoveFile))
+        self.files_pane.tabCloseRequested.connect(self.onTabClose)
+        self.add_file_button.clicked.connect(self.onAddFileButtonClicked)
 
     def dragEnterEvent(self, event):
         if all(url.isLocalFile() for url in event.mimeData().urls()):
@@ -28,53 +28,48 @@ class PlatterQtUI(QtWidgets.QWidget):
         for url in event.mimeData().urls():
             self.app.addFiles([url.path() for url in event.mimeData().urls()])
 
+    def onTabClose(self, index):
+        self.files_pane.widget(index).file.stop()
+
     def initUI(self):
         self.setAcceptDrops(True);
         self.setWindowFlags(QtCore.Qt.Dialog)
         frame = self.frameGeometry()
         frame.moveCenter(self.app.desktop().availableGeometry().center())
         self.move(frame.topLeft())
+
         
-        # Build pane
-        self.content = QtWidgets.QWidget()
-        content_layout = QtWidgets.QVBoxLayout()
-        content_layout.setContentsMargins(0,0,0,0)
-        content_layout.addLayout(self.makeFilesPane())
-        content_layout.addStretch(1)
-        content_layout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-        self.content.setLayout(content_layout)
-        self.content.hide()
-
-        self.notice = QtWidgets.QLabel("Drag to serve files...")
-        self.notice.setMinimumSize(200, 150)
-        self.notice.setAlignment(QtCore.Qt.AlignCenter)
-
-        window_layout = QtWidgets.QHBoxLayout(self)
-        window_layout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-        window_layout.addWidget(self.content)
-        window_layout.addWidget(self.notice)
-
-        self.setLayout(window_layout)
+        self.setLayout(self.makeFilesPane())
         self.setWindowTitle('Platter')
+        self.setWindowIcon(QtGui.QIcon.fromTheme("top"))
 
     def makeFilesPane(self):
-        self.files_pane = QtWidgets.QVBoxLayout()
-        self.files_pane.setSpacing(0)
-        self.files_pane.setContentsMargins(0,0,0,0)
-        self.files_pane.addStretch(1)
+        self.files_pane = QtWidgets.QTabWidget()
+        self.files_pane.setDocumentMode(True)
+        self.add_file_button = QtWidgets.QPushButton()
+        self.add_file_button.setStyleSheet("background: transparent;")
+        self.add_file_button.setIcon(QtGui.QIcon.fromTheme("edit-add"))
+        self.files_pane.setCornerWidget(self.add_file_button)
 
-        return self.files_pane
+        self.files_pane.setTabsClosable(True)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.files_pane)
+        layout.setContentsMargins(0,0,0,0)
+        return layout
+
+    def onAddFileButtonClicked(self):
+        files = QtWidgets.QFileDialog.getOpenFileNames(self, "Serve Files")[0]
+        if files:
+            self.app.addFiles(files)
 
     def onAddFile(self, f):
         file_pane = FilePane(f)
         self.file_panes[f] = file_pane
-        self.files_pane.addWidget(file_pane)
-        self.content.show()
-        self.notice.hide()
+        self.files_pane.addTab(file_pane, f.name)
 
     def onRemoveFile(self, f):
         file_pane = self.file_panes.pop(f)
-        self.files_pane.removeWidget(file_pane)
+        self.files_pane.removeTab(self.files_pane.indexOf(file_pane))
         v = file_pane.layout().takeAt(0)
         while v:
             w = v.widget()
@@ -83,15 +78,10 @@ class PlatterQtUI(QtWidgets.QWidget):
             v = file_pane.layout().takeAt(0)
 
         if not self.file_panes:
-            self.notice.show()
-            self.content.hide()
+            self.close()
 
     def closeEvent(self, e):
-        e.ignore()
         self.app.shutdown()
-        self.notice.setText("Shutting down...")
-        self.content.hide()
-        self.notice.show()
 
     def keyPressEvent(self, e):
         if e.key() in (QtCore.Qt.Key_Escape, QtCore.Qt.Key_Q):
@@ -113,63 +103,40 @@ class FilePane(QtWidgets.QWidget):
         self.file.on("remove", sync(self.onRemoveTransfer))
 
     def initUI(self):
-        content_layout = QtWidgets.QHBoxLayout()
-        content_layout.setContentsMargins(5,5,5,5)
-        content_layout.addLayout(self.makeQRCode())
-        content_layout.addLayout(self.makeInfoPane())
-        content_layout.addStretch(1)
-        content_layout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-        self.setLayout(content_layout)
+        container = QtWidgets.QHBoxLayout()
+        container.setContentsMargins(5,5,5,5)
+        container.addLayout(self.makeQRCode())
+        container.addLayout(self.makeInfoPane())
+        self.setLayout(container)
+        self.setMinimumSize(self.sizeHint())
 
     def makeQRCode(self):
         image = qrcode.make(self.file.url, box_size=5)
         pixmap = QtGui.QPixmap.fromImage(ImageQt(image))
         label = QtWidgets.QLabel('', self)
         label.setPixmap(pixmap)
-        container = QtWidgets.QVBoxLayout()
+        container = QtWidgets.QHBoxLayout()
+        container.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
+        label.setMinimumSize(label.sizeHint())
         container.addWidget(label)
-        container.addStretch(1)
         return container
-
-    def makeHeaderPane(self):
-        title = QtWidgets.QLabel(
-            '<h1 style="font-weight: normal;">{filename}</h1>'.format(
-                filename=escape(self.file.name),
-            )
-        )
-
-        removeBtn = QtWidgets.QToolButton()
-        removeBtn.setText('Remove')
-        removeBtn.setIcon(QtGui.QIcon.fromTheme("edit-delete"))
-        removeBtn.clicked.connect(self.onRemove)
-
-        header = QtWidgets.QHBoxLayout()
-        header.addWidget(title)
-        header.addWidget(removeBtn)
-
-        return header
-
-    def onRemove(self):
-        self.file.stop()
 
     def makeInfoPane(self):
         pane = QtWidgets.QVBoxLayout()
-        pane.addLayout(self.makeHeaderPane())
         pane.addLayout(self.makeUrlPane())
         pane.addWidget(self.makeTransfersPane())
         return pane
 
     def makeUrlPane(self):
         url = QtWidgets.QLabel(self.file.url)
-        copyLink = QtWidgets.QToolButton()
-        copyLink.setText('Copy')
+        copyLink = QtWidgets.QPushButton()
         copyLink.setIcon(QtGui.QIcon.fromTheme("edit-copy"))
         copyLink.clicked.connect(self.copyToClipboard)
 
         url_pane = QtWidgets.QHBoxLayout()
         url_pane.addWidget(url)
-        url_pane.addWidget(copyLink)
         url_pane.addStretch(1)
+        url_pane.addWidget(copyLink)
         return url_pane
 
     def makeTransfersPane(self):

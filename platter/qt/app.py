@@ -9,14 +9,6 @@ class PlatterQt(QtWidgets.QApplication):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        #try:
-        #    fname = self.arguments()[1]
-        #except:
-        #    raise IllegalArgumentException("Missing Filename")
-
-        #if not os.path.exists(fname):
-        #    raise IllegalArgumentException("File Not Found: %s" % fname)
-
 
         self.server = Server()
         self.main = PlatterQtUI()

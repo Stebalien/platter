@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
 import functools
 
-__all__ = ("sync", "IllegalArgumentException")
+__all__ = ("sync",)
 
 class Signaler(QtCore.QObject):
     signal = QtCore.pyqtSignal(tuple, dict)
@@ -24,6 +24,4 @@ class Signaler(QtCore.QObject):
 def sync(fn, block=False):
     return functools.update_wrapper(Signaler(fn, block), fn)
 
-class IllegalArgumentException(ValueError):
-    pass
 
