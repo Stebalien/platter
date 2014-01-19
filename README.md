@@ -26,6 +26,16 @@ TODO
 * Download from the web?
 * Drag and drop data?
 
+Dependencies
+============
+
+python-qrcode
+python-pyqt5
+qt5-svg
+python-pillow
+python-netifaces
+
+
 License
 -------
 
