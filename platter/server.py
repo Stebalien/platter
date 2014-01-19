@@ -10,9 +10,14 @@ from io import DEFAULT_BUFFER_SIZE as BUF_SIZE
 import itertools
 from zipfile import ZipFile
 
-from .util import make_code, list_files
+from .util import list_files
 
 __all__ = ("Observable",)
+
+def render_multiget(fids):
+    return "<p>Downlaoding Files...</p>" + "<br>".join(
+        '<iframe style="border: none;" height="0" src="/{url}"><a href="/{url}">url</a></iframe>'.format(url=fid) for fid in fids
+    )+"<script>window.open('', '_parent', ''); window.close();</script>"
 
 class Request(BaseHTTPRequestHandler, Observable):
     canceled = False
@@ -20,9 +25,31 @@ class Request(BaseHTTPRequestHandler, Observable):
     def __init__(self, *args, **kwargs):
         Observable.__init__(self)
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
+
     def do_GET(self):
+
+        # Multiget
         try:
-            self.file = self.server.paths[self.path]
+            fids = set(itertools.chain.from_iterable((range(int(pair[0]), int(pair[1])+1) if len(pair) == 2 else (int(pair[0]),) for pair in (piece.split('-', 1) for piece in self.path[1:].split('+')))))
+        except:
+            self.send_error(404)
+            return
+
+        if not all(fid > 0 for fid in fids):
+            self.send_error(404)
+            return
+
+        if len(fids) > 1:
+            content = render_multiget(fids).encode('utf-8')
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", len(content))
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
+        try:
+            self.file = self.server.files[tuple(fids)[0]]
         except:
             self.send_error(404)
             return
@@ -86,15 +113,14 @@ class File(Observable):
         self._loaded = Event()
 
         self.name = name
-        self.path = "/" + make_code()
 
     def open(self):
         raise NotImplementedError()
 
     @property
     def url(self):
-        return "http://%s:%d%s" % (
-            self.server.my_ip, self.server.server_port, self.path
+        return "http://%s:%d/%d" % (
+            self.server.my_ip, self.server.server_port, self.fid
         )
 
     @property
@@ -194,28 +220,23 @@ def AutoFile(server, fid, fpaths):
         )
 
 class Server(ThreadingMixIn, HTTPServer, Observable):
+    __last_fid = 0
 
     def __init__(self, address=("", 0), handler=Request, **kwargs):
         Observable.__init__(self)
         HTTPServer.__init__(self, address, handler, **kwargs)
-        self.paths = {}
         self.files = {}
         self.my_ip = find_ip()
 
     def serve(self, fpaths):
-        fid = hash(frozenset(fpaths))
-        if fid in self.files:
-            f = self.files[fid]
-        else:
-            f = AutoFile(self, fid, fpaths)
-            self.files[f.fid] = f
-            self.paths[f.path] = f
-            self.trigger("add", f)
+        self.__last_fid += 1
+        f = AutoFile(self, self.__last_fid, fpaths)
+        self.files[f.fid] = f
+        self.trigger("add", f)
 
         return f
     
     def unserve(self, file):
         f = self.files.pop(file.fid)
-        del self.paths[f.path]
         self.trigger("remove", f)
 
