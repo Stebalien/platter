@@ -2,12 +2,39 @@ from PyQt5 import QtWidgets
 from ..util import async
 from ..dbus import get_instance, PlatterServerDBus
 import os, threading
+import argparse
 
 from .ui import PlatterQtUI
 from ..server import Server
 
 class AlreadyRunning(Exception):
     pass
+
+def parse_args(args):
+    parser = argparse.ArgumentParser()
+    def path_exists(string):
+        if os.path.exists(string):
+            return string
+        else:
+            raise argparse.ArgumentTypeError("Path '%s' does not exist." % string)
+
+    parser.add_argument("files",
+                        nargs='*',
+                        type=path_exists,
+                        default = [],
+                       )
+    parser.add_argument(
+        "-a",
+        "--archive",
+        nargs='+',
+        default = [],
+        action='append',
+        type=path_exists,
+        dest="archives"
+    )
+    args = parser.parse_args()
+    return [[fpath] for fpath in args.files] + args.archives
+
 
 class PlatterQt(QtWidgets.QApplication):
     def __init__(self, *args, **kwargs):
@@ -18,12 +45,13 @@ class PlatterQt(QtWidgets.QApplication):
         except ImportError:
             pass
 
-        fpaths = self.arguments()[1:]
+        fpaths = parse_args(self.arguments()[1:])
 
         inst = get_instance()
         if inst:
             if fpaths:
-                inst.AddFiles(fpaths)
+                for fpath in fpaths:
+                    inst.AddFiles(fpath)
                 raise AlreadyRunning()
 
 
@@ -33,7 +61,8 @@ class PlatterQt(QtWidgets.QApplication):
         self.connectSignals()
 
         if fpaths:
-            self.addFiles(fpaths)
+            for fpath in fpaths:
+                self.addFiles(fpath)
 
         self.main.show()
 
