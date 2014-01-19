@@ -1,7 +1,8 @@
 import qrcode
-from PyQt5 import QtGui, QtCore, QtWidgets
+import qrcode.image.svg
+from PyQt5 import QtGui, QtCore, QtWidgets, QtSvg
+from io import BytesIO
 from .common import sync
-from PIL.ImageQt import ImageQt
 
 class PlatterQtUI(QtWidgets.QWidget):
 
@@ -111,14 +112,21 @@ class FilePane(QtWidgets.QWidget):
         self.setMinimumSize(self.sizeHint())
 
     def makeQRCode(self):
-        image = qrcode.make(self.file.url, box_size=5)
-        pixmap = QtGui.QPixmap.fromImage(ImageQt(image))
-        label = QtWidgets.QLabel('', self)
-        label.setPixmap(pixmap)
+        image = qrcode.make(self.file.url, box_size=5, image_factory=qrcode.image.svg.SvgPathImage)
+        widget = QtSvg.QSvgWidget()
+        with BytesIO() as f:
+            image.save(f)
+            widget.load(f.getvalue())
+
+        pal = QtGui.QPalette(widget.palette())
+        pal.setColor(QtGui.QPalette.Window, QtGui.QColor('white'))
+        widget.setPalette(pal)
+        widget.setAutoFillBackground(True)
         container = QtWidgets.QHBoxLayout()
+        widget.setMinimumSize(150, 150)
+        container.setAlignment(QtCore.Qt.AlignCenter)
         container.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-        label.setMinimumSize(label.sizeHint())
-        container.addWidget(label)
+        container.addWidget(widget)
         return container
 
     def makeInfoPane(self):
