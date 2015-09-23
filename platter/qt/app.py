@@ -39,24 +39,28 @@ def parse_args(args):
 class PlatterQt(QtWidgets.QApplication):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        dbus_enabled = True
         try:
             from dbus.mainloop.pyqt5 import DBusQtMainLoop
             DBusQtMainLoop(set_as_default=True)
         except ImportError:
+            dbus_enabled = False
             pass
 
         fpaths = parse_args(self.arguments()[1:])
 
-        inst = get_instance()
-        if inst:
-            if fpaths:
-                for fpath in fpaths:
-                    inst.AddFiles(fpath)
-                raise AlreadyRunning()
+        if dbus_enabled:
+            inst = get_instance()
+            if inst:
+                if fpaths:
+                    for fpath in fpaths:
+                        inst.AddFiles(fpath)
+                    raise AlreadyRunning()
 
 
         self.server = Server()
-        PlatterServerDBus(self.server)
+        if dbus_enabled:
+            PlatterServerDBus(self.server)
         self.main = PlatterQtUI()
         self.connectSignals()
 

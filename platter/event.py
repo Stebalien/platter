@@ -11,7 +11,11 @@ class Observable:
 
     def trigger(self, signal, *args, **kwargs):
         with self.__lock:
-            callbacks = self.__callbacks.get(signal, frozenset()).union(self.__callbacks.get("all", frozenset()))
+            callbacks = self.__callbacks.get(
+                signal, frozenset()
+            ).union(self.__callbacks.get(
+                "all", frozenset()
+            ))
 
         for cb in callbacks:
             cb(*args, **kwargs)
