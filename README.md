@@ -1,7 +1,7 @@
 Platter
 =======
 
-A simple single-file server with a GUI.
+A simple single-file server with a GUI. It listens on port 10700.
 
 Screenshot
 ----------
@@ -23,6 +23,9 @@ TODO
 ----
 
 * Alternative interfaces (CLI, GTK?)
+* Daemon mode (systemd)? We already listen for new files on dbus.
+* QT Thread safety. Unfortunately, PyQT doesn't work with python threads (well,
+  it works but is very buggy).
 * Download from the web?
 * Drag and drop data?
 
