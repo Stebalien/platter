@@ -209,7 +209,7 @@ class TransferPane(QtWidgets.QWidget):
     def connectSignals(self):
         self.request.on("progress", sync(self.onProgress))
         self.request.on("success", sync(self.onSucceed))
-        self.request.on("fail", sync(self.onFailure))
+        self.request.on("failure", sync(self.onFailure))
 
         self.close_button.clicked.connect(self.onCancel)
 
