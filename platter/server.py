@@ -222,7 +222,7 @@ def AutoFile(server, fid, fpaths):
 class Server(ThreadingMixIn, HTTPServer, Observable):
     __last_fid = 0
 
-    def __init__(self, address=("", 0), handler=Request, **kwargs):
+    def __init__(self, address=("", 10700), handler=Request, **kwargs):
         Observable.__init__(self)
         HTTPServer.__init__(self, address, handler, **kwargs)
         self.files = {}
