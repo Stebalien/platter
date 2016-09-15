@@ -126,10 +126,13 @@ class FilePane(QtWidgets.QWidget):
             image.save(f)
             widget.load(f.getvalue())
 
+        # Fix dark themes.
         pal = QtGui.QPalette(widget.palette())
-        pal.setColor(QtGui.QPalette.Window, QtGui.QColor('white'))
-        widget.setPalette(pal)
-        widget.setAutoFillBackground(True)
+        if pal.color(QtGui.QPalette.Window).getHsv()[2] < 200:
+            pal.setColor(QtGui.QPalette.Window, QtGui.QColor("white"))
+            widget.setPalette(pal)
+            widget.setAutoFillBackground(True)
+
         container = QtWidgets.QHBoxLayout()
         widget.setMinimumSize(150, 150)
         container.setAlignment(QtCore.Qt.AlignCenter)
