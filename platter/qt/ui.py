@@ -4,14 +4,22 @@ from PyQt5 import QtGui, QtCore, QtWidgets, QtSvg
 from io import BytesIO
 from .common import sync
 
+try:
+    # Attempt to use gtk icon theme.
+    import gi
+    gi.require_version('Gtk', '3.0')
+    from gi.repository import Gtk
+    QtGui.QIcon.setThemeName(Gtk.Settings.get_default().get_property('gtk-icon-theme-name'))
+except:
+    # Fall back on default icon theme.
+    QtGui.QIcon.setThemeName('default')
+
 class PlatterQtUI(QtWidgets.QWidget):
 
     def __init__(self):
         super().__init__()
         self.app = QtWidgets.QApplication.instance()
-        QtGui.QIcon.setThemeName('Faenza')
         self.file_panes = {}
-
         self.initUI()
         self.connectSignals()
 
@@ -48,8 +56,8 @@ class PlatterQtUI(QtWidgets.QWidget):
         self.files_pane = QtWidgets.QTabWidget()
         self.files_pane.setDocumentMode(True)
         self.add_file_button = QtWidgets.QPushButton()
-        self.add_file_button.setStyleSheet("background: transparent;")
-        self.add_file_button.setIcon(QtGui.QIcon.fromTheme("edit-add"))
+        self.add_file_button.setStyleSheet("QPushButton { border: none; padding: 10px;}")
+        self.add_file_button.setIcon(QtGui.QIcon.fromTheme("list-add"))
         self.files_pane.setCornerWidget(self.add_file_button)
 
         self.files_pane.setTabsClosable(True)
