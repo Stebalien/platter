@@ -148,6 +148,8 @@ class FilePane(QtWidgets.QWidget):
 
     def makeUrlPane(self):
         url = QtWidgets.QLabel(self.file.url)
+        url.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse);
+        url.setCursor(QtCore.Qt.IBeamCursor)
         copyLink = QtWidgets.QPushButton()
         copyLink.setIcon(QtGui.QIcon.fromTheme("edit-copy"))
         copyLink.clicked.connect(self.copyToClipboard)
