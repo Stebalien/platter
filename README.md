@@ -3,13 +3,12 @@ Platter
 
 A simple single-file server with a GUI. It listens on port 10700.
 
-Screenshot
-----------
+## Screenshot
 
 ![Screenshot](https://raw.github.com/Stebalien/platter/screenshots/screenshot.png)
 
-Features
---------
+## Features
+
 (i.e. why not just use woof)
 
 * Displays the download progress of connected clients.
@@ -19,8 +18,7 @@ Features
 * Files/archives may be added at runtime.
 * Single instance
 
-TODO
-----
+## TODO
 
 * Alternative interfaces (CLI, GTK?)
 * Daemon mode (systemd)? We already listen for new files on dbus.
@@ -29,18 +27,21 @@ TODO
 * Download from the web?
 * Drag and drop data?
 
-Dependencies
-============
+## Dependencies
 
-python-qrcode
-python-pyqt5
-qt5-svg
-python-pillow
-python-netifaces
+* python-qrcode
+* python-pyqt5
+* qt5-svg
+* python-pillow
+* python-netifaces
+
+### Optional (to autodetect icon theme)
+
+* python-gobject
+* gtk3
 
 
-License
--------
+## License
 
 This project is under the [GPLv3](http://www.gnu.org/licenses/gpl.html).
 
